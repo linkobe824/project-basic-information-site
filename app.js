@@ -1,40 +1,52 @@
 const http = require('node:http')
 const fs = require('node:fs/promises')
+const path = require('node:path')
 
 // crear servidor
 const server = http.createServer((req, res) => {
-  res.setHeader('Content-Type', 'text/html')
+  const filePath = path.join(
+    __dirname,
+    'public',
+    req.url === '/' ? 'index.html' : req.url
+  )
 
-  let path = './public/'
+  const extname = path.extname(filePath)
+  let contentType = 'text/html'
 
-  switch (req.url) {
-    case '/':
-      path += 'index.html'
-      res.statusCode = 200
+  switch (extname) {
+    case '.js':
+      contentType = 'text/javascript'
       break
-    case '/about':
-      path += 'about.html'
-      res.statusCode = 200
+    case '.css':
+      contentType = 'text/css'
       break
-    case '/contact':
-      path += 'contact-me.html'
-      res.statusCode = 200
+    case '.json':
+      contentType = 'application/json'
       break
-    case '/contact-me':
-      res.statusCode = 301
-      res.setHeader('Location', '/contact')
+    case '.png':
+      contentType = 'image/png'
       break
-    default:
-      path += '404.html'
-      res.statusCode = 404
+    case '.jpg':
+      contentType = 'image/jpg'
       break
   }
 
-  fs.readFile(path)
-    .then((data) => res.end(data))
+  // leer archivo para enviar respuesta
+  fs.readFile(filePath)
+    .then((data) => {
+      res.writeHead(200, { 'Content-Type': contentType })
+      res.end(data, 'utf8')
+    })
     .catch((err) => {
-      console.log(err)
-      res.end()
+      if (err.code === 'ENOENT') {
+        fs.readFile('./public/404.html').then((data) => {
+          res.writeHead(200, { 'Content-Type': contentType })
+          res.end(data, 'utf8')
+        })
+      } else {
+        res.writeHead(500)
+        res.end(err.code)
+      }
     })
 })
 
