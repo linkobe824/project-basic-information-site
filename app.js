@@ -4,10 +4,10 @@ const path = require('node:path')
 
 // crear servidor
 const server = http.createServer((req, res) => {
-  const filePath = path.join(
+  let filePath = path.join(
     __dirname,
     'public',
-    req.url === '/' ? 'index.html' : req.url
+    req.url === '/' ? 'index' : req.url
   )
 
   const extname = path.extname(filePath)
@@ -31,6 +31,7 @@ const server = http.createServer((req, res) => {
       break
   }
 
+  filePath = path.extname(filePath) === '.css' ? filePath : filePath + '.html'
   // leer archivo para enviar respuesta
   fs.readFile(filePath)
     .then((data) => {
